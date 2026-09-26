@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SIREN PRO™</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;background:#050505;color:#fff}
+body{overflow-x:hidden}
+body.active{animation:shake .12s infinite}
+@keyframes shake{0%{transform:translate(0,0)}25%{transform:translate(2px,-1px)}50%{transform:translate(-2px,1px)}75%{transform:translate(1px,2px)}100%{transform:translate(-1px,-2px)}}
+.bg{position:fixed;inset:0;background:radial-gradient(circle at 50% 25%,rgba(255,0,0,.25),transparent 35%),#050505;z-index:-2}
+.flash{position:fixed;inset:0;background:#f00;opacity:0;pointer-events:none;z-index:20}
+.active .flash{animation:flash .5s infinite}
+@keyframes flash{0%,48%{opacity:0}50%,100%{opacity:.12}}
+header{height:74px;border-bottom:1px solid #222;display:flex;align-items:center;padding:0 20px;gap:12px}
+.logo{font-size:20px;font-weight:800}.logo span{color:#ff3030}
+main{max-width:760px;margin:auto;padding:28px 18px 50px;text-align:center}
+.warning{color:#ff3030;font-size:46px;font-weight:900;letter-spacing:1px;text-shadow:0 0 30px #f00;margin:12px 0}
+.sub{color:#aaa;line-height:1.5;font-size:15px}
+.siren{font-size:145px;line-height:1;margin:25px 0;text-shadow:0 0 45px #f00;filter:drop-shadow(0 0 18px red)}
+.active .siren{animation:pulse .45s infinite alternate}
+@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.07)}}
+button{border:0;color:white;font-weight:800;cursor:pointer}
+.start{width:100%;padding:20px;border-radius:18px;background:linear-gradient(#ff3535,#c90000);font-size:22px;box-shadow:0 0 35px rgba(255,0,0,.35)}
+.start small{display:block;font-size:12px;font-weight:500;margin-top:5px;opacity:.8}
+.panel{margin-top:22px;border:1px solid #292929;background:rgba(12,12,12,.92);border-radius:20px;padding:22px}
+.status{font-size:25px;color:#ff3030;font-weight:900}
+.timer{font-size:54px;font-variant-numeric:tabular-nums;color:#ff3030;margin:10px 0;font-weight:900}
+.meta{display:flex;justify-content:space-between;color:#aaa;font-size:13px}
+.pay{display:none;text-align:left;margin-top:18px}
+.active .pay{display:block}
+.pay h2{margin:0 0 7px;font-size:20px}.price{font-size:38px;font-weight:900;color:#ff3b3b}
+.pay button{width:100%;padding:16px;margin-top:12px;border-radius:14px;background:#151515;border:1px solid #ff3030;color:#fff;font-size:16px}
+.modes{display:flex;gap:10px;overflow:auto;margin-top:20px}
+.mode{min-width:145px;border:1px solid #292929;border-radius:15px;padding:15px;background:#0d0d0d;color:#888}
+.mode:first-child{border-color:#f33;color:#fff}
+footer{color:#666;font-size:12px;margin-top:30px}
+.toast{position:fixed;left:16px;right:16px;bottom:20px;padding:18px;border-radius:16px;background:#151515;border:1px solid #333;text-align:center;transform:translateY(150%);transition:.35s;z-index:50}
+.toast.show{transform:translateY(0)}
+@media(max-width:500px){.warning{font-size:38px}.siren{font-size:115px}.timer{font-size:46px}}
+</style>
+
+<style>
+.warningScreen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 22px;background:radial-gradient(circle at 50% 25%,rgba(255,0,0,.13),transparent 35%),#050505}
+.warningIcon{font-size:58px;margin-bottom:8px}
+.warningScreen .brand{font-size:18px;font-weight:900;letter-spacing:2px}.warningScreen .brand span{color:#f33}
+.warningScreen h1{font-size:30px;letter-spacing:2px;margin:30px 0 14px}.warningText{max-width:470px;color:#aaa;line-height:1.6}.warningText b{color:#fff}
+.volumeBox{width:min(440px,100%);margin:25px 0;padding:22px;border:1px solid #292929;border-radius:18px;background:#0c0c0c;text-align:left}
+.volumeTop{display:flex;justify-content:space-between;font-weight:800}.volumeTop strong{color:#ff3535}
+.volumeBar{height:12px;background:#242424;border-radius:99px;margin:16px 0;overflow:hidden}.volumeBar i{display:block;width:67%;height:100%;background:#ff3030;border-radius:99px;box-shadow:0 0 16px #f00}
+.volumeHint{font-size:12px;color:#777}
+.continueBtn{width:min(440px,100%);padding:18px;border-radius:15px;background:#fff;color:#080808;font-weight:900;font-size:15px;border:0}
+.tiny{font-size:10px;color:#555;margin-top:16px;max-width:430px}
+.secure{margin-left:auto;font-size:10px;color:#555;letter-spacing:1px}
+.eyebrow{font-size:10px;color:#555;letter-spacing:2px;margin-top:5px}
+.lockTitle{font-size:16px;font-weight:900;color:#ff3535}.fine{font-size:10px;color:#555;margin-top:12px;text-align:center}
+.pay button{background:#111!important;border-color:#ff3030!important}
+.mode.selected{box-shadow:0 0 20px rgba(255,0,0,.12)}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="flash"></div>
+
+<div id="warningScreen" class="warningScreen">
+  <div class="warningIcon">⚠️</div>
+  <div class="brand">SIREN <span>PRO™</span></div>
+  <h1>ПОДГОТОВКА К ЗАПУСКУ</h1>
+  <p class="warningText">Перед продолжением установите громкость вашего iPhone примерно на <b>67%</b>.</p>
+  <div class="volumeBox">
+    <div class="volumeTop"><span>ГРОМКОСТЬ</span><strong>67%</strong></div>
+    <div class="volumeBar"><i></i></div>
+    <div class="volumeHint">Используйте физические кнопки громкости iPhone.</div>
+  </div>
+  <button id="continueBtn" class="continueBtn">Я УСТАНОВИЛ(А) 67% →</button>
+  <div class="tiny">Продолжая, вы подтверждаете, что готовы услышать громкий звук.</div>
+</div>
+
+<div id="app" class="app" style="display:none">
+<header><div class="logo">🚨 SIREN <span>PRO™</span></div><div class="secure">SECURE SYSTEM</div></header>
+<main>
+  <div class="eyebrow">EMERGENCY AUDIO SYSTEM · V.4.7</div>
+  <div class="warning">ВНИМАНИЕ</div>
+  <div class="sub">Система готова к активации аварийного звукового сигнала.</div>
+  <div class="siren">🚨</div>
+
+  <button class="start" id="start">АКТИВИРОВАТЬ СИРЕНУ<small>НЕМЕДЛЕННЫЙ ЗАПУСК</small></button>
+
+  <section class="panel">
+    <div class="status" id="status">● СИСТЕМА ГОТОВА</div>
+    <div class="timer" id="timer">05:00</div>
+    <div class="meta"><span>СИСТЕМНЫЙ ТАЙМЕР</span><span id="state">STANDBY</span></div>
+
+    <div class="pay">
+      <div class="lockTitle">🔒 УПРАВЛЕНИЕ ЗАБЛОКИРОВАНО</div>
+      <div class="sub">Для остановки сигнала требуется активация SIREN PRO.</div>
+      <div class="price">$99.99 <small>/ месяц</small></div>
+      <button id="pay">АКТИВИРОВАТЬ SIREN PRO</button>
+      <div class="fine">Безопасная демонстрационная страница · реальные платежи не производятся.</div>
+    </div>
+  </section>
+
+  <div class="modes">
+    <div class="mode selected">🚨<br><b>АВАРИЙНАЯ</b><br>ACTIVE SYSTEM</div>
+    <div class="mode">🚓<br><b>ПОЛИЦИЯ</b><br>PRO LOCKED</div>
+    <div class="mode">🚒<br><b>ПОЖАРНАЯ</b><br>PRO LOCKED</div>
+    <div class="mode">🧟<br><b>ZOMBIE</b><br>PRO LOCKED</div>
+  </div>
+
+  <footer>SIREN PRO™ · PROFESSIONAL EMERGENCY AUDIO SYSTEM<br>DEMONSTRATION MODE</footer>
+</main>
+<div class="toast" id="toast"></div>
+</div>
+
+<script>
+let audio = new Audio("siren.wav");
+audio.loop = true;
+audio.preload = "auto";
+audio.volume = 1.0;
+let endTime, running=false;
+
+const warningScreen = document.getElementById("warningScreen");
+const app = document.getElementById("app");
+document.getElementById("continueBtn").onclick = () => {
+  warningScreen.style.display = "none";
+  app.style.display = "block";
+  window.scrollTo(0,0);
+};
+
+function update(){
+  let left=Math.max(0,endTime-Date.now());
+  let s=Math.ceil(left/1000);
+  document.getElementById("timer").textContent =
+    String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+  if(left<=0) finishSiren();
+}
+
+function startSiren(){
+  if(running) return;
+  running=true;
+  document.body.classList.add("active");
+  document.getElementById("start").style.display="none";
+  document.getElementById("status").textContent="● СИРЕНА АКТИВНА";
+  document.getElementById("state").textContent="RUNNING";
+  endTime=Date.now()+5*60*1000;
+
+  audio.currentTime=0;
+  audio.play().catch(()=>showToast("Нажмите кнопку ещё раз для запуска звука."));
+  update();
+  window.timerInterval=setInterval(update,250);
+  showToast("🚨 СИГНАЛ АКТИВИРОВАН");
+}
+
+function finishSiren(){
+  running=false;
+  document.body.classList.remove("active");
+  clearInterval(window.timerInterval);
+  audio.pause();
+  audio.currentTime=0;
+  document.getElementById("status").textContent="● СИГНАЛ ЗАВЕРШЁН";
+  document.getElementById("state").textContent="COMPLETE";
+  document.getElementById("timer").textContent="00:00";
+}
+
+function showToast(t){
+  const x=document.getElementById("toast");
+  x.textContent=t;
+  x.classList.add("show");
+  setTimeout(()=>x.classList.remove("show"),3000);
+}
+
+document.getElementById("start").onclick=startSiren;
+
+document.getElementById("pay").onclick=()=>{
+  showToast("PAYMENT GATEWAY UNAVAILABLE");
+};
+</script></body>
+</html>
